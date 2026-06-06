@@ -8,6 +8,8 @@ public interface IEnrollmentService
 
     Task<PagedResultBusinessModel<EnrollmentBusinessModel>?> GetByCourseIdAsync(int courseId, CollectionQueryBusinessModel query);
 
+    Task<PagedResultBusinessModel<StudentBusinessModel>?> GetStudentsByCourseIdAsync(int courseId, CollectionQueryBusinessModel query);
+
     Task<EnrollmentBusinessModel?> GetByIdAsync(int id);
 
     Task<EnrollmentBusinessModel> CreateAsync(EnrollmentBusinessModel enrollment);

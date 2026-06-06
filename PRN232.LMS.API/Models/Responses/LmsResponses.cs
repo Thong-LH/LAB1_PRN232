@@ -8,7 +8,7 @@ public class ApiResponse<T>
 
     public T? Data { get; set; }
 
-    public IReadOnlyList<string>? Errors { get; set; }
+    public List<string>? Errors { get; set; }
 
     public static ApiResponse<T> Ok(T? data, string message = "Request processed successfully")
     {
@@ -21,14 +21,14 @@ public class ApiResponse<T>
         };
     }
 
-    public static ApiResponse<T> Fail(string message, IReadOnlyList<string>? errors = null)
+    public static ApiResponse<T> Fail(string message, IEnumerable<string>? errors = null)
     {
         return new ApiResponse<T>
         {
             Success = false,
             Message = message,
             Data = default,
-            Errors = errors ?? new[] { message }
+            Errors = errors?.ToList() ?? new List<string> { message }
         };
     }
 }
@@ -46,9 +46,18 @@ public class PaginationMetadata
 
 public class PagedResultResponse<T>
 {
-    public IReadOnlyList<T> Items { get; set; } = Array.Empty<T>();
+    public List<T> Items { get; set; } = new();
 
     public PaginationMetadata Pagination { get; set; } = new();
+}
+
+public class AuthTokenResponse
+{
+    public string AccessToken { get; set; } = string.Empty;
+
+    public string RefreshToken { get; set; } = string.Empty;
+
+    public int ExpiresIn { get; set; }
 }
 
 public class StudentResponse
@@ -61,7 +70,7 @@ public class StudentResponse
 
     public DateTime DateOfBirth { get; set; }
 
-    public IReadOnlyList<EnrollmentSummaryResponse>? Enrollments { get; set; }
+    public List<EnrollmentSummaryResponse>? Enrollments { get; set; }
 }
 
 public class StudentSummaryResponse
@@ -83,7 +92,7 @@ public class CourseResponse
 
     public SemesterSummaryResponse? Semester { get; set; }
 
-    public IReadOnlyList<EnrollmentSummaryResponse>? Enrollments { get; set; }
+    public List<EnrollmentSummaryResponse>? Enrollments { get; set; }
 }
 
 public class CourseSummaryResponse
@@ -116,7 +125,7 @@ public class SemesterResponse
 
     public DateTime EndDate { get; set; }
 
-    public IReadOnlyList<CourseSummaryResponse>? Courses { get; set; }
+    public List<CourseSummaryResponse>? Courses { get; set; }
 }
 
 public class SemesterSummaryResponse

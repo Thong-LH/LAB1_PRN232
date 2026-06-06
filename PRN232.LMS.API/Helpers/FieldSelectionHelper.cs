@@ -4,7 +4,7 @@ namespace PRN232.LMS.API.Helpers;
 
 public static class FieldSelectionHelper
 {
-    public static IReadOnlyList<object> SelectFields<T>(IEnumerable<T> items, string? fields)
+    public static List<object> SelectFields<T>(IEnumerable<T> items, string? fields)
         where T : class
     {
         if (string.IsNullOrWhiteSpace(fields))

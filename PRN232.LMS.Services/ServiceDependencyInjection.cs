@@ -13,6 +13,7 @@ public static class ServiceDependencyInjection
         services.AddScoped<ISubjectService, SubjectService>();
         services.AddScoped<ISemesterService, SemesterService>();
         services.AddScoped<IEnrollmentService, EnrollmentService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }

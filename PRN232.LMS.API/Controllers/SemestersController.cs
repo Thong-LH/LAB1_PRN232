@@ -1,3 +1,5 @@
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Mappers;
 using PRN232.LMS.API.Models.Requests;
@@ -7,6 +9,9 @@ using PRN232.LMS.Services.Interfaces;
 namespace PRN232.LMS.API.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
+[Authorize]
+[Route("api/v{version:apiVersion}/semesters")]
 [Route("api/semesters")]
 public class SemestersController : ControllerBase
 {
@@ -38,7 +43,7 @@ public class SemestersController : ControllerBase
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<SemesterResponse>>> GetSemester(int id)
+    public async Task<ActionResult<ApiResponse<SemesterResponse>>> GetSemester([FromRoute] int id)
     {
         var semester = await _semesterService.GetByIdAsync(id);
 
@@ -53,7 +58,7 @@ public class SemestersController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<SemesterResponse>>> CreateSemester(CreateSemesterRequest request)
+    public async Task<ActionResult<ApiResponse<SemesterResponse>>> CreateSemester([FromBody] CreateSemesterRequest request)
     {
         try
         {
@@ -75,7 +80,7 @@ public class SemestersController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> UpdateSemester(int id, UpdateSemesterRequest request)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateSemester([FromRoute] int id, [FromBody] UpdateSemesterRequest request)
     {
         try
         {
@@ -95,9 +100,10 @@ public class SemestersController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> DeleteSemester(int id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteSemester([FromRoute] int id)
     {
         var deleted = await _semesterService.DeleteAsync(id);
 

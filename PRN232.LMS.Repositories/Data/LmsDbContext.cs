@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using PRN232.LMS.Repositories.Entities;
 
 namespace PRN232.LMS.Repositories.Data;
@@ -19,6 +20,10 @@ public class LmsDbContext : DbContext
 
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
 
+    public DbSet<User> Users => Set<User>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ConfigureSemesters(modelBuilder);
@@ -26,6 +31,8 @@ public class LmsDbContext : DbContext
         ConfigureSubjects(modelBuilder);
         ConfigureStudents(modelBuilder);
         ConfigureEnrollments(modelBuilder);
+        ConfigureUsers(modelBuilder);
+        ConfigureRefreshTokens(modelBuilder);
 
         SeedData(modelBuilder);
     }
@@ -153,6 +160,60 @@ public class LmsDbContext : DbContext
         modelBuilder.Entity<Course>().HasData(CreateCourses());
         modelBuilder.Entity<Student>().HasData(CreateStudents());
         modelBuilder.Entity<Enrollment>().HasData(CreateEnrollments());
+        modelBuilder.Entity<User>().HasData(CreateUsers());
+    }
+
+    private static void ConfigureUsers(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("User");
+            entity.HasKey(user => user.UserId);
+
+            entity.Property(user => user.Username)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .IsRequired();
+
+            entity.Property(user => user.PasswordHash)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .IsRequired();
+
+            entity.Property(user => user.Role)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .IsRequired();
+
+            entity.HasIndex(user => user.Username)
+                .IsUnique();
+        });
+    }
+
+    private static void ConfigureRefreshTokens(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("RefreshToken");
+            entity.HasKey(refreshToken => refreshToken.RefreshTokenId);
+
+            entity.Property(refreshToken => refreshToken.Token)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .IsRequired();
+
+            entity.Property(refreshToken => refreshToken.ReplacedByToken)
+                .HasMaxLength(200)
+                .IsUnicode(false);
+
+            entity.HasOne(refreshToken => refreshToken.User)
+                .WithMany(user => user.RefreshTokens)
+                .HasForeignKey(refreshToken => refreshToken.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(refreshToken => refreshToken.Token)
+                .IsUnique();
+        });
     }
 
     private static IEnumerable<Semester> CreateSemesters()
@@ -256,5 +317,19 @@ public class LmsDbContext : DbContext
                         Status = statuses[(enrollmentId - 1) % statuses.Length]
                     };
                 }));
+    }
+
+    private static IEnumerable<User> CreateUsers()
+    {
+        var user = new User
+        {
+            UserId = 1,
+            Username = "admin",
+            Role = "Admin"
+        };
+        var passwordHasher = new PasswordHasher<User>();
+        user.PasswordHash = passwordHasher.HashPassword(user, "123456");
+
+        return new[] { user };
     }
 }

@@ -1,3 +1,5 @@
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Mappers;
 using PRN232.LMS.API.Models.Requests;
@@ -7,6 +9,9 @@ using PRN232.LMS.Services.Interfaces;
 namespace PRN232.LMS.API.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
+[Authorize]
+[Route("api/v{version:apiVersion}/subjects")]
 [Route("api/subjects")]
 public class SubjectsController : ControllerBase
 {
@@ -38,7 +43,7 @@ public class SubjectsController : ControllerBase
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<SubjectResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<SubjectResponse>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<SubjectResponse>>> GetSubject(int id)
+    public async Task<ActionResult<ApiResponse<SubjectResponse>>> GetSubject([FromRoute] int id)
     {
         var subject = await _subjectService.GetByIdAsync(id);
 
@@ -53,7 +58,7 @@ public class SubjectsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<SubjectResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<SubjectResponse>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<SubjectResponse>>> CreateSubject(CreateSubjectRequest request)
+    public async Task<ActionResult<ApiResponse<SubjectResponse>>> CreateSubject([FromBody] CreateSubjectRequest request)
     {
         try
         {
@@ -75,7 +80,7 @@ public class SubjectsController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> UpdateSubject(int id, UpdateSubjectRequest request)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateSubject([FromRoute] int id, [FromBody] UpdateSubjectRequest request)
     {
         try
         {
@@ -95,9 +100,10 @@ public class SubjectsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> DeleteSubject(int id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteSubject([FromRoute] int id)
     {
         var deleted = await _subjectService.DeleteAsync(id);
 

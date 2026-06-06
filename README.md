@@ -1,2 +1,2 @@
-# LAB1_PRN232
-RESTful API with docker
+# LAB2_PRN232
+Advanced REST API & Security with Docker

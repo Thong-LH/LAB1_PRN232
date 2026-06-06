@@ -1,3 +1,6 @@
+using Asp.Versioning;
+using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Mappers;
 using PRN232.LMS.API.Models.Requests;
@@ -7,20 +10,27 @@ using PRN232.LMS.Services.Interfaces;
 namespace PRN232.LMS.API.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
+[Authorize]
+[Route("api/v{version:apiVersion}/students")]
 [Route("api/students")]
 public class StudentsController : ControllerBase
 {
     private readonly IStudentService _studentService;
+    private readonly IValidator<CreateStudentRequest> _createStudentValidator;
 
-    public StudentsController(IStudentService studentService)
+    public StudentsController(IStudentService studentService, IValidator<CreateStudentRequest> createStudentValidator)
     {
         _studentService = studentService;
+        _createStudentValidator = createStudentValidator;
     }
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<PagedResultResponse<object>>>> GetStudents([FromQuery] CollectionQueryRequest query)
+    public async Task<ActionResult<ApiResponse<PagedResultResponse<object>>>> GetStudents(
+        [FromQuery] CollectionQueryRequest query,
+        [FromHeader(Name = "X-Request-Id")] string? requestId)
     {
         try
         {
@@ -38,7 +48,9 @@ public class StudentsController : ControllerBase
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<StudentResponse>>> GetStudent(int id)
+    public async Task<ActionResult<ApiResponse<StudentResponse>>> GetStudent(
+        [FromRoute] int id,
+        [FromHeader(Name = "X-Request-Id")] string? requestId)
     {
         var student = await _studentService.GetByIdAsync(id);
 
@@ -53,8 +65,17 @@ public class StudentsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<StudentResponse>>> CreateStudent(CreateStudentRequest request)
+    public async Task<ActionResult<ApiResponse<StudentResponse>>> CreateStudent([FromBody] CreateStudentRequest request)
     {
+        var validationResult = await _createStudentValidator.ValidateAsync(request);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(ApiResponse<StudentResponse>.Fail(
+                "Validation failed.",
+                validationResult.Errors.Select(error => error.ErrorMessage).ToList()));
+        }
+
         try
         {
             var student = await _studentService.CreateAsync(request.ToBusinessModel());
@@ -75,7 +96,7 @@ public class StudentsController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> UpdateStudent(int id, UpdateStudentRequest request)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateStudent([FromRoute] int id, [FromBody] UpdateStudentRequest request)
     {
         try
         {
@@ -95,9 +116,10 @@ public class StudentsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> DeleteStudent(int id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteStudent([FromRoute] int id)
     {
         var deleted = await _studentService.DeleteAsync(id);
 

@@ -1,3 +1,5 @@
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Mappers;
 using PRN232.LMS.API.Models.Requests;
@@ -7,6 +9,9 @@ using PRN232.LMS.Services.Interfaces;
 namespace PRN232.LMS.API.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
+[Authorize]
+[Route("api/v{version:apiVersion}/courses")]
 [Route("api/courses")]
 public class CoursesController : ControllerBase
 {
@@ -40,7 +45,7 @@ public class CoursesController : ControllerBase
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<CourseResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<CourseResponse>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<CourseResponse>>> GetCourse(int id)
+    public async Task<ActionResult<ApiResponse<CourseResponse>>> GetCourse([FromRoute] int id)
     {
         var course = await _courseService.GetByIdAsync(id);
 
@@ -56,7 +61,7 @@ public class CoursesController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<PagedResultResponse<object>>>> GetCourseEnrollments(int id, [FromQuery] CollectionQueryRequest query)
+    public async Task<ActionResult<ApiResponse<PagedResultResponse<object>>>> GetCourseEnrollments([FromRoute] int id, [FromQuery] CollectionQueryRequest query)
     {
         try
         {
@@ -77,10 +82,35 @@ public class CoursesController : ControllerBase
         }
     }
 
+    [HttpGet("{id:int}/students")]
+    [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<PagedResultResponse<object>>>> GetCourseStudents([FromRoute] int id, [FromQuery] CollectionQueryRequest query)
+    {
+        try
+        {
+            var students = await _enrollmentService.GetStudentsByCourseIdAsync(id, query.ToBusinessModel());
+
+            if (students is null)
+            {
+                return NotFound(ApiResponse<PagedResultResponse<object>>.Fail("Course not found."));
+            }
+
+            var response = students.ToPagedResponse(student => student.ToResponse(), query.Fields);
+
+            return Ok(ApiResponse<PagedResultResponse<object>>.Ok(response));
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(ApiResponse<PagedResultResponse<object>>.Fail(exception.Message));
+        }
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<CourseResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<CourseResponse>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<CourseResponse>>> CreateCourse(CreateCourseRequest request)
+    public async Task<ActionResult<ApiResponse<CourseResponse>>> CreateCourse([FromBody] CreateCourseRequest request)
     {
         try
         {
@@ -102,7 +132,7 @@ public class CoursesController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> UpdateCourse(int id, UpdateCourseRequest request)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateCourse([FromRoute] int id, [FromBody] UpdateCourseRequest request)
     {
         try
         {
@@ -122,9 +152,10 @@ public class CoursesController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> DeleteCourse(int id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteCourse([FromRoute] int id)
     {
         var deleted = await _courseService.DeleteAsync(id);
 

@@ -1,3 +1,5 @@
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Mappers;
 using PRN232.LMS.API.Models.Requests;
@@ -7,6 +9,9 @@ using PRN232.LMS.Services.Interfaces;
 namespace PRN232.LMS.API.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
+[Authorize]
+[Route("api/v{version:apiVersion}/enrollments")]
 [Route("api/enrollments")]
 public class EnrollmentsController : ControllerBase
 {
@@ -38,7 +43,7 @@ public class EnrollmentsController : ControllerBase
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<EnrollmentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<EnrollmentResponse>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<EnrollmentResponse>>> GetEnrollment(int id)
+    public async Task<ActionResult<ApiResponse<EnrollmentResponse>>> GetEnrollment([FromRoute] int id)
     {
         var enrollment = await _enrollmentService.GetByIdAsync(id);
 
@@ -53,7 +58,7 @@ public class EnrollmentsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<EnrollmentResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<EnrollmentResponse>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<EnrollmentResponse>>> CreateEnrollment(CreateEnrollmentRequest request)
+    public async Task<ActionResult<ApiResponse<EnrollmentResponse>>> CreateEnrollment([FromBody] CreateEnrollmentRequest request)
     {
         try
         {
@@ -75,7 +80,7 @@ public class EnrollmentsController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> UpdateEnrollment(int id, UpdateEnrollmentRequest request)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateEnrollment([FromRoute] int id, [FromBody] UpdateEnrollmentRequest request)
     {
         try
         {
@@ -95,9 +100,10 @@ public class EnrollmentsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> DeleteEnrollment(int id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteEnrollment([FromRoute] int id)
     {
         var deleted = await _enrollmentService.DeleteAsync(id);
 

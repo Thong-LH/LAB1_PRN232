@@ -19,6 +19,33 @@ public static class ApiModelMapper
         };
     }
 
+    public static LoginBusinessModel ToBusinessModel(this LoginRequest request)
+    {
+        return new LoginBusinessModel
+        {
+            Username = request.Username,
+            Password = request.Password
+        };
+    }
+
+    public static RefreshTokenBusinessModel ToBusinessModel(this RefreshTokenRequest request)
+    {
+        return new RefreshTokenBusinessModel
+        {
+            RefreshToken = request.RefreshToken
+        };
+    }
+
+    public static AuthTokenResponse ToResponse(this AuthTokenBusinessModel authToken)
+    {
+        return new AuthTokenResponse
+        {
+            AccessToken = authToken.AccessToken,
+            RefreshToken = authToken.RefreshToken,
+            ExpiresIn = authToken.ExpiresIn
+        };
+    }
+
     public static PagedResultResponse<object> ToPagedResponse<TBusinessModel, TResponse>(
         this PagedResultBusinessModel<TBusinessModel> result,
         Func<TBusinessModel, TResponse> responseMapper,

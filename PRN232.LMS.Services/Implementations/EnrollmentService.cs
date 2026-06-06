@@ -72,6 +72,30 @@ public class EnrollmentService : IEnrollmentService
         return ApplySort(result, query.Sort).ToPagedResult(query);
     }
 
+    public async Task<PagedResultBusinessModel<StudentBusinessModel>?> GetStudentsByCourseIdAsync(int courseId, CollectionQueryBusinessModel query)
+    {
+        if (!await _courseRepository.ExistsAsync(courseId))
+        {
+            return null;
+        }
+
+        var enrollments = await _enrollmentRepository.GetByCourseIdAsync(courseId, includeStudent: true);
+        var result = enrollments
+            .Where(enrollment => enrollment.Student is not null)
+            .Select(enrollment => enrollment.Student!.ToBusinessModel())
+            .AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim();
+            result = result.Where(student =>
+                student.FullName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                student.Email.Contains(search, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return ApplyStudentSort(result, query.Sort).ToPagedResult(query);
+    }
+
     public async Task<EnrollmentBusinessModel?> GetByIdAsync(int id)
     {
         var enrollment = await _enrollmentRepository.GetByIdAsync(id, includeStudent: true, includeCourse: true);
@@ -182,5 +206,35 @@ public class EnrollmentService : IEnrollmentService
         }
 
         return orderedEnrollments ?? enrollments;
+    }
+
+    private static IEnumerable<StudentBusinessModel> ApplyStudentSort(IEnumerable<StudentBusinessModel> students, string? sort)
+    {
+        if (string.IsNullOrWhiteSpace(sort))
+        {
+            return students.OrderBy(student => student.StudentId);
+        }
+
+        IOrderedEnumerable<StudentBusinessModel>? orderedStudents = null;
+
+        foreach (var sortField in sort.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var descending = sortField.StartsWith('-');
+            var field = descending ? sortField[1..] : sortField;
+            Func<StudentBusinessModel, object?> keySelector = field.ToLowerInvariant() switch
+            {
+                "studentid" => student => student.StudentId,
+                "fullname" => student => student.FullName,
+                "email" => student => student.Email,
+                "dateofbirth" => student => student.DateOfBirth,
+                _ => throw new ArgumentException($"Unknown sort field: {field}.")
+            };
+
+            orderedStudents = orderedStudents is null
+                ? descending ? students.OrderByDescending(keySelector) : students.OrderBy(keySelector)
+                : descending ? orderedStudents.ThenByDescending(keySelector) : orderedStudents.ThenBy(keySelector);
+        }
+
+        return orderedStudents ?? students;
     }
 }
