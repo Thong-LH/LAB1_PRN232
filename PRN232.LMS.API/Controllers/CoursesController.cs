@@ -82,15 +82,15 @@ public class CoursesController : ControllerBase
         }
     }
 
-    [HttpGet("{id:int}/students")]
+    [HttpGet("{courseId:int}/students")]
     [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<PagedResultResponse<object>>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<PagedResultResponse<object>>>> GetCourseStudents([FromRoute] int id, [FromQuery] CollectionQueryRequest query)
+    public async Task<ActionResult<ApiResponse<PagedResultResponse<object>>>> GetCourseStudents([FromRoute] int courseId, [FromQuery] CollectionQueryRequest query)
     {
         try
         {
-            var students = await _enrollmentService.GetStudentsByCourseIdAsync(id, query.ToBusinessModel());
+            var students = await _enrollmentService.GetStudentsByCourseIdAsync(courseId, query.ToBusinessModel());
 
             if (students is null)
             {
