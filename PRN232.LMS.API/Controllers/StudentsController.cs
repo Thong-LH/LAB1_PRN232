@@ -11,6 +11,7 @@ namespace PRN232.LMS.API.Controllers;
 
 [ApiController]
 [ApiVersion("1.0")]
+[ApiVersion("2.0")]
 [Authorize]
 [Route("api/v{version:apiVersion}/students")]
 [Route("api/students")]

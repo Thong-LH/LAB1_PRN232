@@ -49,6 +49,7 @@ builder.Services.AddApiVersioning(options =>
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true;
+    options.ApiVersionReader = new Asp.Versioning.UrlSegmentApiVersionReader();
 })
 .AddMvc()
 .AddApiExplorer(options =>
@@ -153,7 +154,7 @@ app.UseSwaggerUI(options =>
 
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -164,8 +165,8 @@ app.Run();
 
 static async Task EnsureDatabaseCreatedAsync(WebApplication app)
 {
-    const int maxAttempts = 20;
-    var delay = TimeSpan.FromSeconds(3);
+    const int maxAttempts = 60;
+    var delay = TimeSpan.FromSeconds(2);
 
     for (var attempt = 1; attempt <= maxAttempts; attempt++)
     {
@@ -182,8 +183,10 @@ static async Task EnsureDatabaseCreatedAsync(WebApplication app)
             await dbContext.Database.EnsureCreatedAsync();
             return;
         }
-        catch when (attempt < maxAttempts)
+        catch (Exception ex) when (attempt < maxAttempts)
         {
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning(ex, "Database is not ready. Retry {Attempt}/{MaxAttempts}", attempt, maxAttempts);
             await Task.Delay(delay);
         }
     }
