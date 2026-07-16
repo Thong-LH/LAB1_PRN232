@@ -1,0 +1,98 @@
+@model Q2.Models.RoomTypeIndexVM
+@{
+    ViewData["Title"] = "Room Type Management";
+}
+
+<h2>Room Type Management</h2>
+
+<div class="card p-3 my-3">
+    <form method="get" action="/RoomType">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <label for="sl_services" class="form-label">Service Included:</label>
+                <select id="sl_services" name="serviceId" class="form-select">
+                    @if (Model.SelectedServiceId == 0)
+                    {
+                        <option id="op_0" value="0" selected>All services</option>
+                    }
+                    else
+                    {
+                        <option id="op_0" value="0">All services</option>
+                    }
+                    @foreach (var s in Model.Services)
+                    {
+                        if (Model.SelectedServiceId == s.ServiceId)
+                        {
+                            <option id="op_@s.ServiceId" value="@s.ServiceId" selected>@s.ServiceName</option>
+                        }
+                        else
+                        {
+                            <option id="op_@s.ServiceId" value="@s.ServiceId">@s.ServiceName</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="sl_priceRange" class="form-label">Price Segment:</label>
+                <select id="sl_priceRange" name="priceRange" class="form-select">
+                    @if (Model.SelectedPriceRange == "All prices")
+                    {
+                        <option value="All prices" selected>All prices</option>
+                    }
+                    else
+                    {
+                        <option value="All prices">All prices</option>
+                    }
+                    @if (Model.SelectedPriceRange == "Budget ( < 1M )")
+                    {
+                        <option value="Budget ( < 1M )" selected>Budget ( &lt; 1M )</option>
+                    }
+                    else
+                    {
+                        <option value="Budget ( < 1M )">Budget ( &lt; 1M )</option>
+                    }
+                    @if (Model.SelectedPriceRange == "Premium ( >= 1M )")
+                    {
+                        <option value="Premium ( >= 1M )" selected>Premium ( &gt;= 1M )</option>
+                    }
+                    else
+                    {
+                        <option value="Premium ( >= 1M )">Premium ( &gt;= 1M )</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" id="bt_search" class="btn btn-primary w-100">Search</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<table class="table table-striped table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Type Name</th>
+            <th>Base Price</th>
+            <th>Services</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var rt in Model.RoomTypes)
+        {
+            <tr>
+                <td id="td_@(rt.TypeName)_@(rt.RoomTypeId)">@rt.TypeName</td>
+                <td id="td_@(rt.BasePrice.ToString("0.00"))_@(rt.RoomTypeId)">@rt.BasePrice.ToString("0.00")</td>
+                <td>
+                    @foreach (var s in rt.Services)
+                    {
+                        <span id="span_@(s.ServiceName)_@(s.ServiceId)" class="badge bg-info text-dark me-1">@s.ServiceName</span>
+                    }
+                </td>
+                <td>
+                    <a id="a_@(rt.RoomTypeId)" href="/RoomType/Analyze/@rt.RoomTypeId" class="btn btn-sm btn-info text-white">Analyze Type</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

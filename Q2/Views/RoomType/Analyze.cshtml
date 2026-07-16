@@ -1,0 +1,54 @@
+@model Q2.Models.RoomTypeDetailVM
+@{
+    ViewData["Title"] = "Room Type Analysis";
+    decimal marketValue = Model.BasePrice * 1.1m;
+    string marketValueText = marketValue > 2000000m ? "Premium Room" : "Standard Room";
+}
+
+<h2>Room Type Analysis</h2>
+
+<div class="card p-3 my-3">
+    <h4>Basic Information</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">Type ID</dt>
+        <dd class="col-sm-9">
+            <span id="span_@(Model.RoomTypeId)">@Model.RoomTypeId</span>
+        </dd>
+
+        <dt class="col-sm-3">Type Name</dt>
+        <dd class="col-sm-9">
+            <span id="span_@(Model.TypeName)">@Model.TypeName</span>
+        </dd>
+
+        <dt class="col-sm-3">Base Price</dt>
+        <dd class="col-sm-9">
+            <span id="span_@(Model.BasePrice.ToString("0.00"))">@Model.BasePrice.ToString("0.00")</span>
+        </dd>
+    </dl>
+</div>
+
+<h3>Room Inventory Details</h3>
+<table class="table table-striped table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Room Number</th>
+            <th>Current Status</th>
+            <th>Market Value Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var room in Model.Rooms)
+        {
+            <tr>
+                <td id="td_@(room.RoomNumber)_@(room.RoomId)">@room.RoomNumber</td>
+                <td id="td_@(room.Status)_@(room.RoomId)">@room.Status</td>
+                <td id="td_value_@(room.RoomId)">@marketValueText</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div>
+    <a href="/RoomType" class="btn btn-secondary">Back to List</a>
+</div>
