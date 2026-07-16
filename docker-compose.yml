@@ -1,35 +1,98 @@
+version: '3.8'
+
 services:
-  sqlserver:
+  identity-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: prn232-lms-sqlserver
+    container_name: prn232-identity-db
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
     ports:
       - "1433:1433"
-    volumes:
-      - prn232_lms_sql_data:/var/opt/mssql
 
-  api:
+  student-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: prn232-student-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1434:1433"
+
+  course-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: prn232-course-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1435:1433"
+
+  identity-service:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: prn232-lms-api
+      dockerfile: PRN232.LMS.IdentityService/Dockerfile
+    container_name: prn232-identity-service
     depends_on:
-      - sqlserver
+      - identity-db
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ASPNETCORE_URLS: "http://+:8080"
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PRN232_LMS;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
-      Database__EnsureCreatedOnStartup: "true"
+      ConnectionStrings__DefaultConnection: "Server=identity-db,1433;Database=IdentityDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
       Database__RecreateOnStartup: "true"
-      Jwt__Secret: "PRN232_LMS_LAB2_DOCKER_SECRET_KEY_2026_LONG"
+      Jwt__Secret: "PRN232_LMS_LAB3_MICROSERVICES_SECRET_KEY_2026_LONG"
       Jwt__Issuer: "PRN232.LMS.API"
       Jwt__Audience: "PRN232.LMS.Client"
       Jwt__ExpiresInMinutes: "60"
       Jwt__RefreshTokenExpiresInDays: "7"
+
+  student-service:
+    build:
+      context: .
+      dockerfile: PRN232.LMS.StudentService/Dockerfile
+    container_name: prn232-student-service
+    depends_on:
+      - student-db
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__DefaultConnection: "Server=student-db,1433;Database=StudentDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
+      Database__RecreateOnStartup: "true"
+      Jwt__Secret: "PRN232_LMS_LAB3_MICROSERVICES_SECRET_KEY_2026_LONG"
+      Jwt__Issuer: "PRN232.LMS.API"
+      Jwt__Audience: "PRN232.LMS.Client"
+
+  course-service:
+    build:
+      context: .
+      dockerfile: PRN232.LMS.CourseService/Dockerfile
+    container_name: prn232-course-service
+    depends_on:
+      - course-db
+      - student-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=course-db,1433;Database=CourseDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
+      Database__RecreateOnStartup: "true"
+      Jwt__Secret: "PRN232_LMS_LAB3_MICROSERVICES_SECRET_KEY_2026_LONG"
+      Jwt__Issuer: "PRN232.LMS.API"
+      Jwt__Audience: "PRN232.LMS.Client"
+      GrpcServices__StudentServiceUrl: "http://student-service:8081"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: PRN232.LMS.Gateway/Dockerfile
+    container_name: prn232-api-gateway
+    depends_on:
+      - identity-service
+      - student-service
+      - course-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+      Jwt__Secret: "PRN232_LMS_LAB3_MICROSERVICES_SECRET_KEY_2026_LONG"
+      Jwt__Issuer: "PRN232.LMS.API"
+      Jwt__Audience: "PRN232.LMS.Client"
     ports:
       - "8080:8080"
-
-volumes:
-  prn232_lms_sql_data:

@@ -1,0 +1,6 @@
+@PRN232.LMS.StudentService_HostAddress = http://localhost:5165
+
+GET {{PRN232.LMS.StudentService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
