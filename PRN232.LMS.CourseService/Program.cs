@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using PRN232.LMS.CourseService.Data;
 using PRN232.LMS.CourseService.Grpc;
 using PRN232.LMS.CourseService.Middleware;
+using PRN232.LMS.Grpc;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,6 +51,11 @@ builder.Services.AddDbContext<CourseDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // gRPC Client
+builder.Services.AddGrpcClient<StudentGrpc.StudentGrpcClient>(options =>
+{
+    var url = builder.Configuration["GrpcServices:StudentServiceUrl"] ?? "http://localhost:5002";
+    options.Address = new Uri(url);
+});
 builder.Services.AddScoped<IStudentGrpcClient, StudentGrpcClient>();
 
 // API Versioning

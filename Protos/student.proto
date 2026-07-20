@@ -5,16 +5,17 @@ option csharp_namespace = "PRN232.LMS.Grpc";
 package student;
 
 service StudentGrpc {
-  rpc GetStudentById (GetStudentRequest) returns (StudentResponse);
+  rpc GetStudentById (GetStudentByIdRequest) returns (GetStudentByIdResponse);
 }
 
-message GetStudentRequest {
-  int32 id = 1;
-}
-
-message StudentResponse {
+message GetStudentByIdRequest {
   int32 student_id = 1;
-  string full_name = 2;
-  string email = 3;
-  bool exists = 4;
 }
+
+message GetStudentByIdResponse {
+  bool exists = 1;
+  int32 student_id = 2;
+  string full_name = 3;
+  string email = 4;
+}
+

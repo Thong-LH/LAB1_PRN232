@@ -15,21 +15,21 @@ public class StudentGrpcService : StudentGrpc.StudentGrpcBase
         _logger = logger;
     }
 
-    public override async Task<StudentResponse> GetStudentById(GetStudentRequest request, ServerCallContext context)
+    public override async Task<GetStudentByIdResponse> GetStudentById(GetStudentByIdRequest request, ServerCallContext context)
     {
-        _logger.LogInformation("gRPC GetStudentById called for ID: {StudentId}", request.Id);
+        _logger.LogInformation("gRPC GetStudentById called for ID: {StudentId}", request.StudentId);
         
-        var student = await _dbContext.Students.FindAsync(request.Id);
+        var student = await _dbContext.Students.FindAsync(request.StudentId);
         if (student is null)
         {
-            _logger.LogWarning("gRPC GetStudentById: Student with ID {StudentId} not found.", request.Id);
-            return new StudentResponse
+            _logger.LogWarning("gRPC GetStudentById: Student with ID {StudentId} not found.", request.StudentId);
+            return new GetStudentByIdResponse
             {
                 Exists = false
             };
         }
 
-        return new StudentResponse
+        return new GetStudentByIdResponse
         {
             StudentId = student.StudentId,
             FullName = student.FullName,

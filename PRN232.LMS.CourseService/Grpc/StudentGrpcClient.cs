@@ -1,4 +1,3 @@
-using Grpc.Net.Client;
 using PRN232.LMS.Grpc;
 using PRN232.LMS.CourseService.Models;
 
@@ -11,12 +10,12 @@ public interface IStudentGrpcClient
 
 public class StudentGrpcClient : IStudentGrpcClient
 {
-    private readonly string _studentServiceUrl;
+    private readonly StudentGrpc.StudentGrpcClient _grpcClient;
     private readonly ILogger<StudentGrpcClient> _logger;
 
-    public StudentGrpcClient(IConfiguration configuration, ILogger<StudentGrpcClient> logger)
+    public StudentGrpcClient(StudentGrpc.StudentGrpcClient grpcClient, ILogger<StudentGrpcClient> logger)
     {
-        _studentServiceUrl = configuration["GrpcServices:StudentServiceUrl"] ?? "http://localhost:5002";
+        _grpcClient = grpcClient;
         _logger = logger;
     }
 
@@ -24,11 +23,9 @@ public class StudentGrpcClient : IStudentGrpcClient
     {
         try
         {
-            _logger.LogInformation("Calling gRPC StudentService GetStudentById for ID: {StudentId} at URL {Url}", studentId, _studentServiceUrl);
-            using var channel = GrpcChannel.ForAddress(_studentServiceUrl);
-            var client = new StudentGrpc.StudentGrpcClient(channel);
+            _logger.LogInformation("Calling gRPC StudentService GetStudentById for ID: {StudentId}", studentId);
             
-            var response = await client.GetStudentByIdAsync(new GetStudentRequest { Id = studentId });
+            var response = await _grpcClient.GetStudentByIdAsync(new GetStudentByIdRequest { StudentId = studentId });
             if (!response.Exists)
             {
                 _logger.LogWarning("gRPC GetStudentById: Student {StudentId} does not exist.", studentId);
@@ -49,3 +46,4 @@ public class StudentGrpcClient : IStudentGrpcClient
         }
     }
 }
+
